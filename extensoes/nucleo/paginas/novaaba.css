@@ -1,0 +1,68 @@
+body { min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+.ceu {
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    linear-gradient(180deg, #1b2a5e 0%, #3b3d6e 26%, #b9746a 52%, #f6b27a 66%, var(--fundo) 86%);
+}
+.ceu .brilho {
+  position: absolute; left: 50%; top: 58%; width: 900px; height: 900px; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 220, 140, .55) 0%, rgba(255, 179, 15, .18) 28%, transparent 60%);
+}
+@media (prefers-color-scheme: dark) {
+  .ceu { background: linear-gradient(180deg, #0a1030 0%, #16245a 40%, #3a3a6a 62%, var(--fundo) 88%); }
+  .ceu .brilho { background: radial-gradient(circle, rgba(46, 196, 201, .22) 0%, transparent 55%); }
+}
+
+.topo { display: flex; align-items: center; gap: 14px; padding: 16px 24px; color: #fff; }
+.topo .marca { font-size: 15px; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+.acoes-topo { margin-left: auto; display: flex; gap: 8px; }
+.botao.fantasma { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.22); text-decoration: none; backdrop-filter: blur(8px); }
+.botao.fantasma:hover { background: rgba(255,255,255,.24); }
+.chip-conteiner { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.92); color: var(--anil); font-weight: 700; font-size: 13px; }
+
+.centro { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6vh 16px 24px; }
+.saudacao { margin: 0; color: rgba(255,255,255,.9); font-size: 18px; font-weight: 500; text-shadow: 0 1px 10px rgba(0,0,0,.25); }
+.relogio { font-size: clamp(56px, 10vw, 104px); font-weight: 300; color: #fff; letter-spacing: -0.03em; margin: 2px 0 28px; text-shadow: 0 2px 24px rgba(0,0,0,.18); font-variant-numeric: tabular-nums; }
+
+.busca { position: relative; display: flex; align-items: center; width: min(680px, 100%); padding: 6px; border-radius: 999px; }
+.busca input { flex: 1; border: 0; background: transparent; padding: 12px 10px; font-size: 16px; min-width: 0; }
+.busca input:focus { outline: none; }
+.busca:focus-within { box-shadow: 0 0 0 4px rgba(46, 196, 201, .35), var(--sombra); }
+.buscador { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--superficie-2); border-radius: 999px; padding: 8px 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.lupa { border: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--destaque); color: var(--destaque-texto); cursor: pointer; display: grid; place-items: center; flex: none; }
+.lista-buscadores { position: absolute; top: calc(100% + 8px); left: 0; list-style: none; margin: 0; padding: 6px; min-width: 220px; z-index: 5; }
+.lista-buscadores li { padding: 9px 12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; }
+.lista-buscadores li:hover, .lista-buscadores li[aria-selected="true"] { background: var(--superficie-2); }
+.lista-buscadores small { color: var(--texto-2); }
+
+.atalhos { display: grid; grid-template-columns: repeat(auto-fill, 104px); gap: 14px; justify-content: center; width: min(820px, 100%); margin-top: 34px; }
+.atalho { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 10px; border-radius: var(--raio); text-decoration: none; color: var(--texto); background: color-mix(in srgb, var(--superficie) 86%, transparent); border: 1px solid var(--borda); backdrop-filter: blur(10px); transition: transform .12s, box-shadow .12s; }
+.atalho:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
+.atalho .icone { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--superficie-2); }
+.atalho .icone img { width: 24px; height: 24px; }
+.atalho span { font-size: 12.5px; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atalho .remover { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--superficie-2); color: var(--texto-2); cursor: pointer; opacity: 0; font-size: 14px; line-height: 1; }
+.atalho:hover .remover, .atalho .remover:focus-visible { opacity: 1; }
+.atalho.novo { cursor: pointer; font: inherit; }
+.atalho.novo .icone { font-size: 24px; color: var(--texto-2); }
+
+.painel-protecao { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin: 0 auto 28px; padding: 16px 22px; width: min(820px, calc(100% - 32px)); }
+.pp-titulo { display: flex; align-items: center; gap: 12px; color: var(--ok); }
+.pp-titulo div { display: flex; flex-direction: column; color: var(--texto); }
+.pp-titulo span { font-size: 12.5px; }
+.numeros { display: flex; gap: 28px; margin: 0 0 0 auto; flex-wrap: wrap; }
+.numeros div { display: flex; flex-direction: column-reverse; }
+.numeros dt { font-size: 12px; color: var(--texto-2); }
+.numeros dd { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+dialog { border: 1px solid var(--borda); padding: 22px; width: min(420px, calc(100% - 32px)); color: var(--texto); }
+dialog::backdrop { background: rgba(15, 21, 38, .45); backdrop-filter: blur(3px); }
+dialog form { display: grid; gap: 14px; }
+dialog label { display: grid; gap: 6px; font-weight: 600; font-size: 13px; }
+.linha-botoes { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 640px) {
+  .numeros { margin-left: 0; gap: 18px; }
+  .acoes-topo .botao { padding: 7px 12px; }
+}

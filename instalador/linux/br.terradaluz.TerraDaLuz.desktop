@@ -1,0 +1,23 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Terra da Luz
+GenericName=Navegador de internet
+GenericName[en]=Web Browser
+Comment=Navegue com privacidade, sem rastreadores e protegido contra golpes
+Exec=terra-da-luz %U
+Icon=br.terradaluz.TerraDaLuz
+Terminal=false
+StartupNotify=true
+Categories=Network;WebBrowser;
+Keywords=internet;navegador;web;browser;privacidade;
+MimeType=text/html;text/xml;application/xhtml+xml;application/pdf;x-scheme-handler/http;x-scheme-handler/https;
+Actions=nova-janela;janela-anonima;
+
+[Desktop Action nova-janela]
+Name=Nova janela
+Exec=terra-da-luz --new-window
+
+[Desktop Action janela-anonima]
+Name=Nova janela anônima
+Exec=terra-da-luz --incognito

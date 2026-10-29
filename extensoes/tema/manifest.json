@@ -1,0 +1,112 @@
+{
+  "manifest_version": 3,
+  "name": "Terra da Luz — Tema Areia",
+  "version": "1.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1PQBOKqoOg/jTosAoFBIgz56CM5NNw4el6keHhsbfgpMHadEbYu1h7J9ZKdFeaiKQce7+unB2IpRQTNTAiACN3tjRkgATFvIdzkSdbiM7SLd/i+IYAd6VRr8RnN+GgzMsQqPS80Q2D8pjW1gu6j+4k5GI9FL3w2MfifugUMKOXjAZK/YbGRrbkx0y7K5YR3/gC52Uu0/p/Rvwa8sv2BuM3a7QcGzA1A/KZPUoE5hiIXzzE18o5x4x7wjTI689djfDUhNCGLebMsRif+GeM7HhyYSEiZHfnC1MRxwIs6pmXhrjZ6mE2Sm0EYWOy2IGjlt8CFpIqsFHV6sWdPICc3ZlwIDAQAB",
+  "description": "Tema claro e quente do Terra da Luz: areia, sol e mar.",
+  "icons": {
+    "16": "icones/icone-16.png",
+    "48": "icones/icone-48.png",
+    "128": "icones/icone-128.png"
+  },
+  "theme": {
+    "colors": {
+      "frame": [
+        244,
+        233,
+        218
+      ],
+      "frame_inactive": [
+        239,
+        231,
+        220
+      ],
+      "frame_incognito": [
+        27,
+        42,
+        94
+      ],
+      "frame_incognito_inactive": [
+        38,
+        57,
+        122
+      ],
+      "toolbar": [
+        255,
+        251,
+        245
+      ],
+      "toolbar_text": [
+        29,
+        35,
+        51
+      ],
+      "toolbar_button_icon": [
+        10,
+        79,
+        122
+      ],
+      "tab_text": [
+        29,
+        35,
+        51
+      ],
+      "tab_background_text": [
+        107,
+        91,
+        75
+      ],
+      "tab_background_text_inactive": [
+        140,
+        125,
+        110
+      ],
+      "bookmark_text": [
+        61,
+        50,
+        41
+      ],
+      "omnibox_background": [
+        243,
+        236,
+        224
+      ],
+      "omnibox_text": [
+        29,
+        35,
+        51
+      ],
+      "ntp_background": [
+        250,
+        246,
+        238
+      ],
+      "ntp_text": [
+        29,
+        35,
+        51
+      ],
+      "ntp_link": [
+        10,
+        79,
+        122
+      ],
+      "button_background": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "tints": {
+      "buttons": [
+        0.56,
+        0.75,
+        0.3
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom"
+    }
+  }
+}

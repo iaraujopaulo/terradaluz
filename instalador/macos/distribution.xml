@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Um único instalador para Macs com Apple Silicon (M1, M2, M3...) e Intel:
+     instala automaticamente a versão certa do navegador. -->
+<installer-gui-script minSpecVersion="2">
+  <title>Terra da Luz</title>
+  <organization>br.terradaluz</organization>
+  <welcome file="bemvindo.html" mime-type="text/html"/>
+  <conclusion file="concluido.html" mime-type="text/html"/>
+  <options customize="never" require-scripts="false" hostArchitectures="arm64,x86_64"/>
+  <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+  <os-version min="12.0"/>
+  <script><![CDATA[
+    function ehAppleSilicon() { return system.sysctl('hw.optional.arm64') == 1; }
+  ]]></script>
+  <choices-outline>
+    <line choice="app-arm64"/>
+    <line choice="app-x64"/>
+    <line choice="comum"/>
+  </choices-outline>
+  <choice id="app-arm64" visible="false" selected="ehAppleSilicon()" enabled="false">
+    <pkg-ref id="br.terradaluz.TerraDaLuz.app-arm64"/>
+  </choice>
+  <choice id="app-x64" visible="false" selected="!ehAppleSilicon()" enabled="false">
+    <pkg-ref id="br.terradaluz.TerraDaLuz.app-x64"/>
+  </choice>
+  <choice id="comum" visible="false">
+    <pkg-ref id="br.terradaluz.TerraDaLuz.comum"/>
+  </choice>
+  <pkg-ref id="br.terradaluz.TerraDaLuz.app-arm64">app-arm64.pkg</pkg-ref>
+  <pkg-ref id="br.terradaluz.TerraDaLuz.app-x64">app-x64.pkg</pkg-ref>
+  <pkg-ref id="br.terradaluz.TerraDaLuz.comum">comum.pkg</pkg-ref>
+</installer-gui-script>

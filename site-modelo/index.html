@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terra da Luz — navegador privado</title>
+  <link rel="icon" href="simbolo.png">
+  <style>
+    :root { --anil:#1b2a5e; --ambar:#f69c4a; --mar:#2ec4c9; --fundo:#faf6ee; --texto:#1d2333; --texto2:#5b6274; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; color:var(--texto); background:var(--fundo); }
+    header { min-height:78vh; display:grid; place-items:center; text-align:center; padding:48px 16px; color:#fff;
+      background:linear-gradient(180deg,#1b2a5e 0%,#3b3d6e 30%,#b9746a 62%,#f6b27a 82%,var(--fundo) 100%); }
+    header img { width:132px; height:132px; filter:drop-shadow(0 10px 30px rgba(0,0,0,.25)); }
+    h1 { font-size:clamp(40px,7vw,72px); margin:16px 0 8px; letter-spacing:-.02em; }
+    header p { font-size:19px; max-width:640px; margin:0 auto 28px; opacity:.95; }
+    .baixar { display:inline-block; padding:16px 30px; border-radius:999px; background:#fff; color:var(--anil); font-weight:700; font-size:17px; text-decoration:none; box-shadow:0 10px 30px rgba(27,42,94,.3); }
+    .botoes { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .versoes { font-size:13px; opacity:.85; margin-top:14px; min-height:1em; }
+    .linux { max-width:1040px; margin:0 auto 32px; padding:0 16px; }
+    .linux div { background:#fff; border:1px solid #e7dccb; border-radius:16px; padding:20px; }
+    .linux code { display:block; background:#f3ece0; border-radius:8px; padding:10px 12px; margin:8px 0; overflow-x:auto; font-size:13.5px; }
+    .baixar small { display:block; font-weight:500; font-size:12.5px; color:var(--texto2); }
+    main { max-width:1040px; margin:0 auto; padding:24px 16px 64px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    .item { background:#fff; border:1px solid #e7dccb; border-radius:16px; padding:20px; }
+    .item h2 { font-size:17px; margin:0 0 6px; }
+    .item p { margin:0; color:var(--texto2); font-size:14.5px; line-height:1.5; }
+    footer { text-align:center; color:var(--texto2); font-size:13px; padding:0 16px 40px; }
+    footer a { color:var(--anil); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <img src="simbolo.png" alt="Símbolo do Terra da Luz: sol nascendo sobre o mar">
+      <h1>Terra da Luz</h1>
+      <p>O motor do Chromium sem a telemetria do Google, com a filosofia de privacidade do Firefox. Feito no Ceará.</p>
+      <div class="botoes">
+        <a class="baixar" id="b-windows-x64" href="https://github.com/@REPOSITORIO@/releases">Windows<small>Windows 10 e 11 · 64 bits</small></a>
+        <a class="baixar" id="b-macos-universal" href="https://github.com/@REPOSITORIO@/releases">macOS<small>Apple Silicon e Intel · macOS 12+</small></a>
+        <a class="baixar" id="b-linux-x64" href="https://github.com/@REPOSITORIO@/releases">Linux<small>Flatpak · qualquer distribuição</small></a>
+      </div>
+      <p class="versoes" id="versoes"></p>
+    </div>
+  </header>
+  <main>
+    <div class="item"><h2>Sem telemetria</h2><p>Baseado no ungoogled-chromium: nada é enviado ao Google sem você pedir.</p></div>
+    <div class="item"><h2>Bloqueio de rastreadores</h2><p>Proteção nos moldes do Firefox, no motor nativo do Chromium, com o uBlock Origin embutido.</p></div>
+    <div class="item"><h2>Antigolpe</h2><p>Avisa sobre sites falsos de bancos, gov.br e lojas, e bloqueia downloads perigosos.</p></div>
+    <div class="item"><h2>Contêineres</h2><p>Banco, trabalho e compras separados, cada um com seus próprios cookies e logins.</p></div>
+    <div class="item"><h2>Modo Internet Explorer</h2><p>Recarregue sistemas antigos no motor do IE 11 do próprio Windows.</p></div>
+    <div class="item"><h2>Extensões do Chrome</h2><p>Instale extensões da Chrome Web Store com um clique.</p></div>
+    <div class="item"><h2>Atualização automática</h2><p>Versões novas chegam sozinhas, com assinatura digital conferida.</p></div>
+    <div class="item"><h2>Isolamento de abas</h2><p>Cada site roda em um processo separado, protegido pela sandbox do Chromium.</p></div>
+  </main>
+  <section class="linux">
+    <div>
+      <h2 style="font-size:17px;margin:0 0 6px">Instalar no Linux</h2>
+      <p style="margin:0;color:var(--texto2)">Dê dois cliques no arquivo .flatpak (ou <a href="flatpak/terra-da-luz.flatpakref">instale pela central de programas</a>). Pelo terminal:</p>
+      <code>flatpak install --user TerraDaLuz-*.flatpak</code>
+      <p style="margin:0;color:var(--texto2)">As atualizações chegam pela central de programas ou com <b>flatpak update</b>.</p>
+    </div>
+  </section>
+  <footer>Código aberto em <a href="https://github.com/@REPOSITORIO@">github.com/@REPOSITORIO@</a>. Chromium e ungoogled-chromium (BSD), uBlock Origin (GPLv3).</footer>
+  <script>
+    // Os botões apontam direto para o instalador mais recente de cada sistema.
+    const linhas = [];
+    for (const [plat, nome] of [["windows-x64", "Windows"], ["macos-universal", "macOS"], ["linux-x64", "Linux"]]) {
+      fetch(`atualizacoes/estavel-${plat}.json`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m) => {
+          if (!m || !m.arquivos || !m.arquivos[plat]) return;
+          document.getElementById("b-" + plat).href = m.arquivos[plat].url;
+          linhas.push(`${nome} ${m.versao}`);
+          document.getElementById("versoes").textContent = "Versões atuais: " + linhas.join(" · ");
+        })
+        .catch(() => {});
+    }
+  </script>
+</body>
+</html>

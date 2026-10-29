@@ -1,0 +1,47 @@
+{
+  "distribution": {
+    "skip_first_run_ui": true,
+    "show_welcome_page": false,
+    "import_bookmarks": false,
+    "import_history": false,
+    "import_search_engine": false,
+    "make_chrome_default_for_user": false,
+    "suppress_first_run_default_browser_prompt": false
+  },
+  "default_search_provider_data": {
+    "template_url_data": {
+      "short_name": "DuckDuckGo",
+      "keyword": "duckduckgo.com",
+      "url": "https://duckduckgo.com/?q={searchTerms}",
+      "suggestions_url": "https://duckduckgo.com/ac/?q={searchTerms}&type=list",
+      "favicon_url": "https://duckduckgo.com/favicon.ico",
+      "input_encodings": ["UTF-8"],
+      "prepopulate_id": 92,
+      "safe_for_autoreplace": true
+    }
+  },
+  "browser": {
+    "show_home_button": true,
+    "has_seen_welcome_page": true
+  },
+  "enable_do_not_track": true,
+  "https_only_mode_enabled": true,
+  "webrtc": {
+    "ip_handling_policy": "default_public_interface_only"
+  },
+  "intl": {
+    "accept_languages": "pt-BR,pt,en-US,en"
+  },
+  "translate": {
+    "enabled": false
+  },
+  "safebrowsing": {
+    "enabled": false
+  },
+  "alternate_error_pages": {
+    "enabled": false
+  },
+  "search": {
+    "suggest_enabled": false
+  }
+}

@@ -1,0 +1,100 @@
+# Compila o Terra da Luz para macOS e gera um único instalador .pkg que serve
+# para Macs com Apple Silicon (M1, M2, M3...) e com processador Intel.
+#
+# Como usar: aba Actions › "Compilar navegador (macOS)" › Run workflow.
+name: Compilar navegador (macOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: Publicar a versão para atualização automática ao terminar
+        type: boolean
+        default: true
+      maquina:
+        description: Máquina do GitHub (o Chromium precisa de ~100 GB livres; troque por uma máquina maior se faltar espaço)
+        type: string
+        default: macos-15
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: navegador-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  compilar:
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+      fail-fast: true
+    uses: ./.github/workflows/macos-etapas.yml
+    with:
+      arch: ${{ matrix.arch }}
+      maquina: ${{ inputs.maquina || 'macos-15' }}
+
+  pacote:
+    runs-on: macos-15
+    needs: compilar
+    outputs:
+      versao: ${{ steps.versao.outputs.versao }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: terra-app-*
+          path: apps
+          merge-multiple: true
+
+      - name: Versão
+        id: versao
+        run: |
+          TAG=$(python3 -c "import json;print(json.load(open('terra.config.json'))['ungoogledChromiumMacos']['tag'])")
+          REV=$(python3 -c "import json;print(json.load(open('terra.config.json'))['revisaoTerra'])")
+          echo "versao=$TAG-t$REV.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+
+      - name: Ajudante universal (Apple Silicon + Intel)
+        run: |
+          set -euo pipefail
+          for a in arm64 amd64; do
+            CGO_ENABLED=0 GOOS=darwin GOARCH=$a go -C ajudante build -trimpath -ldflags "-s -w -X main.versaoAjudante=${{ steps.versao.outputs.versao }}" -o "$PWD/terra-ajudante-$a" ./cmd/terra-ajudante
+          done
+          lipo -create -output terra-ajudante terra-ajudante-arm64 terra-ajudante-amd64
+          codesign --force --sign - terra-ajudante
+
+      - name: Montar o instalador .pkg
+        run: |
+          set -euo pipefail
+          mkdir -p apps/arm64 apps/x86_64 saida
+          ditto -x -k apps/terra-app-arm64.zip apps/arm64
+          ditto -x -k apps/terra-app-x86_64.zip apps/x86_64
+          for a in arm64 x86_64; do codesign --force --deep --sign - apps/$a/*.app; done
+          python3 instalador/preparar.py --plataforma macos --versao "${{ steps.versao.outputs.versao }}"
+          instalador/macos/construir-pkg.sh "$(ls -d apps/arm64/*.app)" "$(ls -d apps/x86_64/*.app)" \
+            terra-ajudante "${{ steps.versao.outputs.versao }}" \
+            "saida/TerraDaLuz-${{ steps.versao.outputs.versao }}-macOS.pkg"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: instalador-macos
+          path: saida/TerraDaLuz-*.pkg
+          retention-days: 30
+
+  publicar:
+    needs: pacote
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publicar }}
+    uses: ./.github/workflows/publicar.yml
+    with:
+      versao: ${{ needs.pacote.outputs.versao }}
+      plataforma: macos-universal
+      artefato: instalador-macos
+    secrets: inherit

@@ -1,0 +1,23 @@
+{
+  "produto": "Terra da Luz",
+  "repositorio": "auto",
+  "urlPublica": "auto",
+  "canal": "estavel",
+  "revisaoTerra": "1",
+  "ungoogledChromiumWindows": {
+    "repositorio": "https://github.com/ungoogled-software/ungoogled-chromium-windows",
+    "tag": "156.0.8078.73-1.1"
+  },
+  "ungoogledChromiumLinux": {
+    "repositorio": "https://github.com/ungoogled-software/ungoogled-chromium-portablelinux",
+    "tag": "156.0.8078.73-1"
+  },
+  "ungoogledChromiumMacos": {
+    "repositorio": "https://github.com/ungoogled-software/ungoogled-chromium-macos",
+    "tag": "156.0.8078.47-1.1"
+  },
+  "ublockOrigin": {
+    "repositorio": "gorhill/uBlock",
+    "versao": "mais-recente"
+  }
+}

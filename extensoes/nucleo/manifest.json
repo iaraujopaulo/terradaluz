@@ -1,0 +1,78 @@
+{
+  "manifest_version": 3,
+  "name": "Terra da Luz — Núcleo",
+  "short_name": "Terra da Luz",
+  "version": "1.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAutVIY9AGRPWg+QS2DbhXlJGPVMdEH7Tn9YO6TUxHohXjJ9RBxW3ich6LBDL4YGNIRoQktC57FbfQQUb+JhCBdwP9+SlmXCar8rYKwLl1O6KiNj7NLfXvSDA6LVbkBzT7Hhuect1TfjrlKri2WPNHJjqHocYKPtIsHMK9+ds0m3taWf06Pch6iqM+ng0BbH5TamelEIW8OPaQdTAxL9N42X65X69SajoPxWD4xt64ereGpH5J4ByPF/6vuQtLDF6IkxTef0fQFFXTotg+C7gXwLmpyhuoJbczHbJ6iz9dE3nbP/DNxwfk3eHrbBTu/J+7Ojajcjg9YQgfs/FJxvTLpwIDAQAB",
+  "description": "Proteção contra rastreadores e golpes, contêineres, modo Internet Explorer, central de extensões e nova aba do navegador Terra da Luz.",
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "icones/icone-16.png",
+    "32": "icones/icone-32.png",
+    "48": "icones/icone-48.png",
+    "128": "icones/icone-128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "alarms",
+    "contextMenus",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "downloads",
+    "favicon",
+    "management",
+    "nativeMessaging",
+    "notifications",
+    "scripting",
+    "storage",
+    "tabs",
+    "topSites",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "paginas/novaaba.html"
+  },
+  "options_page": "paginas/painel.html",
+  "action": {
+    "default_title": "Terra da Luz",
+    "default_popup": "paginas/popup.html",
+    "default_icon": {
+      "16": "icones/icone-16.png",
+      "32": "icones/icone-32.png"
+    }
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "rastreadores",
+        "enabled": true,
+        "path": "regras/rastreadores.json"
+      },
+      {
+        "id": "parametros",
+        "enabled": true,
+        "path": "regras/parametros.json"
+      }
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chromewebstore.google.com/*"
+      ],
+      "js": [
+        "conteudo/loja.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

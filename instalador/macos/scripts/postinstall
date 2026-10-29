@@ -1,0 +1,33 @@
+#!/bin/bash
+# Executado pelo instalador do macOS depois de copiar os arquivos.
+set -u
+SUPORTE="/Library/Application Support/TerraDaLuz"
+APP="/Applications/Terra da Luz.app"
+
+# 1) aplicativo baixado da internet sem assinatura da Apple: tira a quarentena
+xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
+
+# 2) ajudante para o Núcleo (contêineres e verificação de versões)
+HOSTS="/Library/Application Support/Chromium/NativeMessagingHosts"
+mkdir -p "$HOSTS"
+cp "$SUPORTE/br.terradaluz.ajudante.json" "$HOSTS/br.terradaluz.ajudante.json"
+chmod 644 "$HOSTS/br.terradaluz.ajudante.json"
+
+# 3) preferências iniciais (DuckDuckGo, HTTPS primeiro, sem tradutor do Google...)
+cp "$SUPORTE/initial_preferences" "/Library/Application Support/Chromium/Chromium Initial Preferences"
+
+# 4) atualizações automáticas: ao ligar o Mac e a cada 6 horas
+PLIST="/Library/LaunchDaemons/br.terradaluz.atualizacao.plist"
+chown root:wheel "$PLIST"; chmod 644 "$PLIST"
+launchctl bootout system "$PLIST" 2>/dev/null || true
+launchctl bootstrap system "$PLIST" 2>/dev/null || launchctl load -w "$PLIST" 2>/dev/null || true
+
+# 5) perfil de políticas (privacidade + extensões embutidas): o macOS exige
+#    que a pessoa aprove em Ajustes do Sistema. Abrimos o perfil para ela.
+USUARIO=$(stat -f%Su /dev/console)
+if [ -n "$USUARIO" ] && [ "$USUARIO" != "root" ]; then
+  UID_USUARIO=$(id -u "$USUARIO")
+  launchctl asuser "$UID_USUARIO" sudo -u "$USUARIO" open "$SUPORTE/TerraDaLuz-Politicas.mobileconfig" || true
+  launchctl asuser "$UID_USUARIO" sudo -u "$USUARIO" osascript -e 'display dialog "Falta um passo: abra Ajustes do Sistema › Geral › Gerenciamento de Dispositivos (ou Privacidade e Segurança › Perfis), clique no perfil \"Terra da Luz\" e em Instalar.\n\nEle ativa a proteção contra rastreadores, o bloqueio de anúncios e a nova aba do Terra da Luz." with title "Terra da Luz" buttons {"Entendi"} default button 1 with icon note' >/dev/null 2>&1 || true
+fi
+exit 0

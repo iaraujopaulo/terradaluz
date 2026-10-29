@@ -1,0 +1,36 @@
+--- a/chrome/app/chrome_main_delegate.cc
++++ b/chrome/app/chrome_main_delegate.cc
+@@ -1180,6 +1180,33 @@
+ #endif
+ 
+ #if !defined(BUILDING_CHROME_RENDERER)
++  // Terra da Luz: liga por padrão as proteções contra impressão digital
++  // (fingerprinting) que o ungoogled-chromium oferece como opção, e faz o
++  // navegador nunca baixar extensões CRX como arquivo comum. Só no processo
++  // principal; os processos filhos recebem as opções dele. Para desligar,
++  // inicie com --terra-sem-protecoes-padrao.
++  {
++    base::CommandLine* terra_cl = base::CommandLine::ForCurrentProcess();
++    if (!terra_cl->HasSwitch("type") &&
++        !terra_cl->HasSwitch("terra-sem-protecoes-padrao")) {
++      for (const char* terra_switch :
++           {"fingerprinting-canvas-image-data-noise",
++            "fingerprinting-canvas-measuretext-noise",
++            "fingerprinting-client-rects-noise", "no-pings",
++            "disable-search-engine-collection"}) {
++        if (!terra_cl->HasSwitch(terra_switch)) {
++          terra_cl->AppendSwitch(terra_switch);
++        }
++      }
++      if (!terra_cl->HasSwitch("extension-mime-request-handling")) {
++        terra_cl->AppendSwitchASCII("extension-mime-request-handling",
++                                    "always-prompt-for-install");
++      }
++    }
++  }
++#endif  // !defined(BUILDING_CHROME_RENDERER)
++
++#if !defined(BUILDING_CHROME_RENDERER)
+   const base::CommandLine& command_line =
+       *base::CommandLine::ForCurrentProcess();
+ #endif  // !defined(BUILDING_CHROME_RENDERER)

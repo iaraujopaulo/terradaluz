@@ -1,0 +1,323 @@
+# Compila o Terra da Luz para Linux e gera o instalador Flatpak.
+#
+# O navegador é compilado com o ungoogled-chromium-portablelinux (em até 10
+# etapas encadeadas, por causa do limite de 6 h por máquina do GitHub) e depois
+# empacotado como Flatpak, que instala em qualquer distribuição Linux.
+#
+# Como usar: aba Actions › "Compilar navegador (Linux)" › Run workflow.
+name: Compilar navegador (Linux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: Publicar a versão para atualização automática ao terminar
+        type: boolean
+        default: true
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  ARCH: x86_64
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: navegador-linux-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: docker/setup-buildx-action@v3
+      - name: Imagem Docker de compilação
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker
+          file: ./docker/build.Dockerfile
+          tags: chromium-builder:trixie-slim
+          outputs: type=docker,dest=/tmp/chromium-builder.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: actions/upload-artifact@v5
+        with:
+          name: docker-image-x86_64
+          path: /tmp/chromium-builder.tar
+          retention-days: 1
+      - name: Preparar código-fonte
+        uses: ./.github/actions/build
+        with:
+          prepare-only: true
+          use-existing-image: true
+
+  parte-01:
+    runs-on: ubuntu-latest
+    needs: prep
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-02:
+    runs-on: ubuntu-latest
+    needs: parte-01
+    if: needs.parte-01.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-03:
+    runs-on: ubuntu-latest
+    needs: parte-02
+    if: needs.parte-02.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-04:
+    runs-on: ubuntu-latest
+    needs: parte-03
+    if: needs.parte-03.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-05:
+    runs-on: ubuntu-latest
+    needs: parte-04
+    if: needs.parte-04.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-06:
+    runs-on: ubuntu-latest
+    needs: parte-05
+    if: needs.parte-05.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-07:
+    runs-on: ubuntu-latest
+    needs: parte-06
+    if: needs.parte-06.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-08:
+    runs-on: ubuntu-latest
+    needs: parte-07
+    if: needs.parte-07.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-09:
+    runs-on: ubuntu-latest
+    needs: parte-08
+    if: needs.parte-08.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true }
+
+  parte-10:
+    runs-on: ubuntu-latest
+    needs: parte-09
+    if: needs.parte-09.outputs.status == 'running'
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - uses: ./.github/actions/build
+        id: build
+        with: { use-existing-image: true, final: true }
+
+  navegador:
+    runs-on: ubuntu-latest
+    needs: parte-10
+    if: ${{ !cancelled() && !failure() }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: linux }
+      - name: Empacotar (tar.xz)
+        uses: ./.github/actions/package
+
+  flatpak:
+    runs-on: ubuntu-latest
+    needs: navegador
+    outputs:
+      versao: ${{ steps.versao.outputs.versao }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Baixar o navegador compilado
+        uses: actions/download-artifact@v5
+        with:
+          pattern: '*-x86_64-linux'
+          path: navegador
+          merge-multiple: true
+
+      - name: Versão
+        id: versao
+        run: |
+          TAG=$(python3 -c "import json;print(json.load(open('terra.config.json'))['ungoogledChromiumLinux']['tag'])")
+          REV=$(python3 -c "import json;print(json.load(open('terra.config.json'))['revisaoTerra'])")
+          echo "versao=$TAG-t$REV.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+
+      - name: Montar a pasta do Flatpak
+        env:
+          VERSAO: ${{ steps.versao.outputs.versao }}
+        run: |
+          set -euo pipefail
+          python3 instalador/preparar.py --plataforma linux --versao "$VERSAO"
+          B=instalador/linux/build
+          rm -rf "$B"; mkdir -p "$B"
+          cp navegador/*_linux.tar.xz "$B/navegador.tar.xz"
+          CGO_ENABLED=0 go -C ajudante build -trimpath -ldflags "-s -w -X main.versaoAjudante=$VERSAO" -o "$PWD/$B/terra-ajudante" ./cmd/terra-ajudante
+          cp instalador/gerado/linux/* "$B/"
+          cp instalador/linux/br.terradaluz.TerraDaLuz.desktop "$B/"
+          sed -e "s/@VERSAO@/$VERSAO/" -e "s/@DATA@/$(date -u +%Y-%m-%d)/" instalador/linux/br.terradaluz.TerraDaLuz.metainfo.xml > "$B/br.terradaluz.TerraDaLuz.metainfo.xml"
+          cp -r instalador/linux/icones "$B/icones"
+
+      - name: Instalar o flatpak-builder
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Chave de assinatura do repositório
+        env:
+          CHAVES_TERRA: ${{ secrets.CHAVES_TERRA }}
+          CHAVE_GPG_FLATPAK: ${{ secrets.CHAVE_GPG_FLATPAK }}
+        run: |
+          ferramentas/carregar-chaves.sh flatpak-privada.asc
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"; mkdir -m 700 -p "$GNUPGHOME"
+          gpg --batch --import chaves/flatpak-privada.asc
+          rm -rf chaves
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          echo "GPG_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/{print $10; exit}')" >> "$GITHUB_ENV"
+
+      - name: Construir o Flatpak
+        env:
+          VERSAO: ${{ steps.versao.outputs.versao }}
+        run: |
+          set -euo pipefail
+          URL=$(python3 ferramentas/terra_config.py urlPublica)
+          cd instalador/linux
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --default-branch=stable --gpg-sign="$GPG_ID" --gpg-homedir="$GNUPGHOME" \
+            --repo=repo construcao br.terradaluz.TerraDaLuz.yml
+          flatpak build-update-repo --gpg-sign="$GPG_ID" --gpg-homedir="$GNUPGHOME" \
+            --title="Terra da Luz" --default-branch=stable repo
+          mkdir -p ../../saida
+          flatpak build-bundle --gpg-sign="$GPG_ID" --gpg-homedir="$GNUPGHOME" \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
+            --repo-url="${URL}flatpak/repo" \
+            --gpg-keys=../../politicas/flatpak-chave-publica.gpg \
+            repo "../../saida/TerraDaLuz-$VERSAO-x86_64.flatpak" br.terradaluz.TerraDaLuz stable
+          ls -la ../../saida
+
+      - name: Guardar o repositório Flatpak
+        run: tar -C instalador/linux -cf saida/flatpak-repo.tar repo
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: instalador-linux
+          path: |
+            saida/TerraDaLuz-*.flatpak
+            saida/flatpak-repo.tar
+          retention-days: 30
+
+  publicar:
+    needs: flatpak
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publicar }}
+    uses: ./.github/workflows/publicar.yml
+    with:
+      versao: ${{ needs.flatpak.outputs.versao }}
+      plataforma: linux-x64
+      artefato: instalador-linux
+    secrets: inherit

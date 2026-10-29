@@ -1,0 +1,11 @@
+--- a/chrome/browser/extensions/extension_management.cc
++++ b/chrome/browser/extensions/extension_management.cc
+@@ -96,7 +96,7 @@
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
+ // Disables off-store force-installed extensions in low trust environments.
+ BASE_FEATURE(kDisableOffstoreForceInstalledExtensionsInLowTrustEnviroment,
+-             base::FEATURE_ENABLED_BY_DEFAULT);
++             base::FEATURE_DISABLED_BY_DEFAULT);
+ 
+ // Disables force-installed extensions in low trust environments when
+ // greylisted.

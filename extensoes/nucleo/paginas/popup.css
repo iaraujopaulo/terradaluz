@@ -1,0 +1,25 @@
+body { width: 360px; padding: 14px; display: grid; gap: 12px; }
+.cab { display: flex; align-items: center; justify-content: space-between; }
+.cab .marca img { width: 24px; height: 24px; }
+.site { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--raio); background: var(--superficie); border: 1px solid var(--borda); }
+.site-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.site-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-info span { font-size: 12px; }
+.alerta { padding: 10px 12px; border-radius: var(--raio-p); background: color-mix(in srgb, var(--perigo) 12%, transparent); color: var(--perigo); font-size: 12.5px; }
+.bloco { display: grid; gap: 10px; padding: 12px; border-radius: var(--raio); background: var(--superficie); border: 1px solid var(--borda); }
+.linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.linha > span:first-child { display: flex; flex-direction: column; }
+.linha small { font-size: 12px; }
+.linha.pequena { font-size: 13px; }
+.contagem { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+.contagem div { display: flex; flex-direction: column; padding: 8px 2px; border-radius: 8px; background: var(--superficie-2); }
+.contagem b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.contagem small { font-size: 10.5px; color: var(--texto-2); line-height: 1.2; }
+.contagem div:first-child b { color: var(--ok); }
+.botao.largo { width: 100%; border-radius: var(--raio-p); }
+.lista-conteineres { display: flex; flex-wrap: wrap; gap: 6px; }
+.lista-conteineres button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--borda); background: var(--superficie-2); cursor: pointer; font-weight: 600; font-size: 12.5px; }
+.lista-conteineres button:hover { border-color: var(--mar); }
+.campo.mini { width: auto; padding: 5px 8px; font-size: 13px; }
+.rodape { display: flex; justify-content: space-around; font-size: 12.5px; }
+.rodape a { text-decoration: none; font-weight: 600; }

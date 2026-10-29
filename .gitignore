@@ -1,0 +1,17 @@
+# Chaves privadas: NUNCA enviar ao GitHub
+chaves/
+*.pem
+*.key
+# Gerados
+instalador/gerado/
+saida/
+iehost/TerraIE.exe
+ucw/
+.site/
+instalador/linux/build/
+instalador/linux/repo/
+instalador/linux/construcao/
+.flatpak-builder/
+chaves-PRIVADAS*.zip
+SEGREDO-*.txt
+CHAVES_TERRA*.txt

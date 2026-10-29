@@ -1,0 +1,43 @@
+--- a/components/policy/core/common/policy_loader_common.cc
++++ b/components/policy/core/common/policy_loader_common.cc
+@@ -37,6 +37,17 @@
+ 
+ // String to be prepended to each blocked entry.
+ const char kBlockedExtensionPrefix[] = "[BLOCKED]";
++
++// Terra da Luz: o instalador grava políticas que instalam as extensões
++// embutidas do navegador a partir do servidor de atualizações do projeto.
++// Somente este endereço é liberado; qualquer outro continua bloqueado em
++// computadores domésticos (proteção contra programas maliciosos).
++const char kTerraDaLuzUpdateURLPrefix[] = "@TERRA_URL_ATUALIZACOES@";
++
++bool IsTerraDaLuzUpdateURL(const std::string& url) {
++  return base::StartsWith(url, kTerraDaLuzUpdateURLPrefix,
++                          base::CompareCase::INSENSITIVE_ASCII);
++}
+ #endif
+ 
+ void RecordInvalidPolicies(const std::string& policy_name) {
+@@ -69,7 +80,8 @@
+ 
+     // Only allow custom update urls in enterprise environments.
+     if (!base::EqualsCaseInsensitiveASCII(entry.substr(pos + 1),
+-                                          kChromeWebstoreUpdateURL)) {
++                                          kChromeWebstoreUpdateURL) &&
++        !IsTerraDaLuzUpdateURL(entry.substr(pos + 1))) {
+       policy_list_value->GetList()[i] =
+           base::Value(kBlockedExtensionPrefix + entry);
+       has_invalid_policies = true;
+@@ -113,8 +125,10 @@
+       continue;
+     }
+     std::string* update_url = entry_dict.FindString(kUpdateUrl);
+-    if (!update_url || base::EqualsCaseInsensitiveASCII(
+-                           *update_url, kChromeWebstoreUpdateURL)) {
++    if (!update_url ||
++        base::EqualsCaseInsensitiveASCII(*update_url,
++                                         kChromeWebstoreUpdateURL) ||
++        IsTerraDaLuzUpdateURL(*update_url)) {
+       continue;
+     }
+ 

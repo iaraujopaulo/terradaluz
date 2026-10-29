@@ -1,0 +1,73 @@
+body { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.lateral { position: sticky; top: 0; height: 100vh; padding: 24px 16px; border-right: 1px solid var(--borda); background: var(--superficie); display: flex; flex-direction: column; gap: 24px; }
+.lateral .marca { padding: 0 10px; font-size: 17px; }
+.lateral .marca img { width: 32px; height: 32px; }
+#menu { display: grid; gap: 2px; }
+#menu a { padding: 10px 12px; border-radius: 10px; text-decoration: none; color: var(--texto); font-weight: 500; }
+#menu a:hover { background: var(--superficie-2); }
+#menu a[aria-current="page"] { background: color-mix(in srgb, var(--mar) 16%, transparent); color: var(--destaque); font-weight: 700; }
+
+main { padding: 36px clamp(16px, 4vw, 56px) 64px; max-width: 920px; }
+.secao { display: none; }
+.secao.ativa { display: grid; gap: 16px; animation: entrar .18s ease-out; }
+@keyframes entrar { from { opacity: 0; transform: translateY(4px); } }
+.secao h1 { font-size: 28px; }
+.secao h2 { font-size: 17px; margin-top: 14px; }
+.secao > p { margin: 0; }
+.pequeno { font-size: 12.5px; }
+
+.niveis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.nivel { display: grid; gap: 6px; padding: 16px 16px 16px 46px; position: relative; cursor: pointer; box-shadow: none; }
+.nivel input { position: absolute; left: 16px; top: 18px; accent-color: var(--mar-fundo); width: 18px; height: 18px; }
+.nivel span { color: var(--texto-2); font-size: 13px; }
+.nivel:has(input:checked) { border-color: var(--mar); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mar) 35%, transparent); }
+
+.lista-status { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.lista-status li { display: flex; gap: 10px; align-items: baseline; }
+.lista-simples { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.lista-simples li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: var(--raio-p); background: var(--superficie); border: 1px solid var(--borda); }
+.lista-simples li.vazio { justify-content: center; color: var(--texto-2); border-style: dashed; background: transparent; }
+
+.opcoes { display: grid; }
+.opcao { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 18px; cursor: pointer; }
+.opcao + .opcao { border-top: 1px solid var(--borda); }
+.opcao > span:first-child { display: grid; gap: 2px; }
+.opcao small { color: var(--texto-2); font-size: 12.5px; }
+.campo.curto { width: 220px; }
+
+.linha-acao { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.form-linha { display: flex; gap: 10px; align-items: center; padding: 10px; flex-wrap: wrap; }
+.form-linha .campo { flex: 1; min-width: 200px; }
+
+.grade-conteineres { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.conteiner { display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 5px solid var(--cor); }
+.conteiner strong { flex: 1; }
+.cores { display: flex; gap: 6px; }
+.cores label { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; }
+.cores input { position: absolute; opacity: 0; }
+.cores label:has(input:checked) { border-color: var(--texto); }
+
+.status-ajudante { padding: 16px; display: flex; gap: 12px; align-items: center; }
+
+.lista-extensoes { display: grid; gap: 10px; }
+.extensao { display: flex; gap: 14px; align-items: center; padding: 14px; }
+.extensao img { width: 40px; height: 40px; border-radius: 8px; }
+.extensao .info { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.extensao .info small { color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.extensao .selos { display: flex; gap: 6px; flex-wrap: wrap; }
+.extensao .acoes { display: flex; gap: 8px; align-items: center; }
+
+.versao { display: flex; gap: 32px; padding: 20px; align-items: center; flex-wrap: wrap; }
+.versao div { display: grid; gap: 2px; }
+.versao strong { font-size: 18px; }
+.acoes-versao { margin-left: auto; display: flex !important; gap: 8px; grid-auto-flow: column; }
+
+.sobre { display: flex; gap: 20px; padding: 20px; align-items: center; }
+.sobre p { margin: 0 0 8px; }
+
+@media (max-width: 760px) {
+  body { grid-template-columns: 1fr; }
+  .lateral { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--borda); }
+  #menu { grid-auto-flow: column; overflow-x: auto; }
+  #menu a { white-space: nowrap; }
+}

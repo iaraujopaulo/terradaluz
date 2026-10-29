@@ -1,0 +1,32 @@
+# Um clique para lançar uma versão nova nos três sistemas.
+# Aba Actions › "Lançar nova versão (Windows, Linux e macOS)" › Run workflow.
+name: Lançar nova versão (Windows, Linux e macOS)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  lancar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conferir as chaves
+        env:
+          CHAVES_TERRA: ${{ secrets.CHAVES_TERRA }}
+          CHAVE_ATUALIZACAO: ${{ secrets.CHAVE_ATUALIZACAO }}
+        run: |
+          if [ -z "$CHAVES_TERRA" ] && [ -z "$CHAVE_ATUALIZACAO" ]; then
+            echo "::error::Cadastre o segredo CHAVES_TERRA antes (veja o LEIAME, seção 2). Sem ele os navegadores não recebem atualizações."
+            exit 1
+          fi
+      - name: Iniciar as três compilações
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for w in extensoes.yml navegador-windows.yml navegador-linux.yml navegador-macos.yml; do
+            gh workflow run "$w" --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+            echo "iniciado: $w"
+          done

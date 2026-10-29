@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Terra da Luz">
+  <title>Terra da Luz</title>
+  <defs>
+    <clipPath id="disco"><circle cx="256" cy="256" r="244"/></clipPath>
+    <linearGradient id="ceu" x1="0" y1="40" x2="0" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2A5E"/><stop offset="1" stop-color="#F69C4A"/>
+    </linearGradient>
+    <radialGradient id="sol" cx="256" cy="300" r="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF1B0"/><stop offset="1" stop-color="#FFB30F"/>
+    </radialGradient>
+    <linearGradient id="mar" x1="0" y1="310" x2="0" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2EC4C9"/><stop offset="1" stop-color="#0A4F7A"/>
+    </linearGradient>
+    <linearGradient id="fundo" x1="0" y1="370" x2="0" y2="490" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A4F7A"/><stop offset="1" stop-color="#07375C"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#disco)">
+    <rect width="512" height="512" fill="url(#ceu)"/>
+    <g fill="#FFC83D" opacity="0.95"><polygon points="359.3,276.2 420.9,267.9 421.9,273.8 361.2,287.0"/><polygon points="344.9,242.3 400.0,213.4 403.0,218.6 350.4,251.8"/><polygon points="319.8,215.4 361.7,169.4 366.3,173.3 328.3,222.4"/><polygon points="287.0,198.6 310.6,141.1 316.3,143.2 297.4,202.4"/><polygon points="250.5,194.1 253.0,132.0 259.0,132.0 261.5,194.1"/><polygon points="214.6,202.4 195.7,143.2 201.4,141.1 225.0,198.6"/><polygon points="183.7,222.4 145.7,173.3 150.3,169.4 192.2,215.4"/><polygon points="161.6,251.8 109.0,218.6 112.0,213.4 167.1,242.3"/><polygon points="150.8,287.0 90.1,273.8 91.1,267.9 152.7,276.2"/></g>
+    <circle cx="256" cy="300" r="86" fill="url(#sol)"/>
+    <path d="M0,321.6 L0.0,321.6 L16.0,323.8 L32.0,325.3 L48.0,326.0 L64.0,325.8 L80.0,324.8 L96.0,323.0 L112.0,320.6 L128.0,317.8 L144.0,314.9 L160.0,312.1 L176.0,309.6 L192.0,307.6 L208.0,306.4 L224.0,306.0 L240.0,306.5 L256.0,307.7 L272.0,309.7 L288.0,312.3 L304.0,315.1 L320.0,318.1 L336.0,320.8 L352.0,323.1 L368.0,324.9 L384.0,325.8 L400.0,325.9 L416.0,325.2 L432.0,323.7 L448.0,321.5 L464.0,318.8 L480.0,315.9 L496.0,313.0 L512.0,310.4 L512,512 L0,512 Z" fill="url(#mar)"/>
+    <path d="M0,381.7 L0.0,381.7 L16.0,379.8 L32.0,377.4 L48.0,374.8 L64.0,372.0 L80.0,369.2 L96.0,366.5 L112.0,364.2 L128.0,362.3 L144.0,360.9 L160.0,360.1 L176.0,360.0 L192.0,360.6 L208.0,361.8 L224.0,363.5 L240.0,365.7 L256.0,368.3 L272.0,371.1 L288.0,373.9 L304.0,376.6 L320.0,379.1 L336.0,381.1 L352.0,382.7 L368.0,383.7 L384.0,384.0 L400.0,383.7 L416.0,382.7 L432.0,381.1 L448.0,379.0 L464.0,376.6 L480.0,373.9 L496.0,371.0 L512.0,368.3 L512,512 L0,512 Z" fill="url(#fundo)"/>
+  </g>
+  <circle cx="256" cy="256" r="239.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="9"/>
+</svg>

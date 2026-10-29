@@ -1,0 +1,359 @@
+# Compila o Terra da Luz para Windows (x64) no GitHub Actions.
+#
+# O Chromium é grande demais para uma única máquina do GitHub (limite de 6 h),
+# então a compilação é dividida em até 16 etapas que continuam umas das outras,
+# como no ungoogled-chromium-windows. Leva de 10 a 20 horas no total.
+#
+# Como usar: aba Actions › "Compilar navegador (Windows)" › Run workflow.
+# Ou crie uma tag começando com "v" (ex.: v156.0.8078.73-1) para compilar e publicar.
+name: Compilar navegador (Windows)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: Publicar a versão para atualização automática ao terminar
+        type: boolean
+        default: true
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: navegador-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  etapa-1:
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 1 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: false
+          from_artifact: false
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-2:
+    needs: etapa-1
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 2 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-1.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-3:
+    needs: etapa-2
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 3 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-2.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-4:
+    needs: etapa-3
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 4 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-3.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-5:
+    needs: etapa-4
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 5 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-4.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-6:
+    needs: etapa-5
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 6 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-5.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-7:
+    needs: etapa-6
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 7 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-6.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-8:
+    needs: etapa-7
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 8 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-7.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-9:
+    needs: etapa-8
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 9 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-8.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-10:
+    needs: etapa-9
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 10 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-9.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-11:
+    needs: etapa-10
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 11 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-10.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-12:
+    needs: etapa-11
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 12 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-11.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-13:
+    needs: etapa-12
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 13 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-12.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-14:
+    needs: etapa-13
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 14 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-13.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-15:
+    needs: etapa-14
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 15 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-14.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  etapa-16:
+    needs: etapa-15
+    runs-on: windows-2022
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/preparar-windows
+      - name: Compilar (etapa 16 de até 16)
+        id: etapa
+        uses: ./ucw/.github/actions/stage
+        with:
+          finished: ${{ needs.etapa-15.outputs.terminou }}
+          from_artifact: true
+    outputs:
+      terminou: ${{ steps.etapa.outputs.finished }}
+
+  empacotar:
+    needs: etapa-16
+    if: ${{ needs.etapa-16.outputs.terminou == 'true' }}
+    runs-on: windows-2022
+    outputs:
+      versao: ${{ steps.versao.outputs.versao }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Baixar o navegador compilado
+        uses: actions/download-artifact@v5
+        with:
+          name: chromium
+          path: saida-chromium
+
+      - name: Versão
+        id: versao
+        shell: pwsh
+        run: |
+          $cfg = Get-Content terra.config.json -Raw | ConvertFrom-Json
+          $v = "$($cfg.ungoogledChromiumWindows.tag)-t$($cfg.revisaoTerra).${{ github.run_number }}"
+          "versao=$v" >> $env:GITHUB_OUTPUT
+          New-Item -ItemType Directory -Force saida | Out-Null
+          $mini = Get-ChildItem saida-chromium -Recurse -Filter '*_installer_x64.exe' | Select-Object -First 1
+          if (-not $mini) { throw 'instalador do Chromium não encontrado nos artefatos' }
+          Copy-Item $mini.FullName saida\mini_installer.exe
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+
+      - name: Ajudante (terra-ajudante.exe)
+        shell: pwsh
+        working-directory: ajudante
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: |
+          go test ./...
+          go build -trimpath -ldflags "-s -w -H windowsgui -X main.versaoAjudante=${{ steps.versao.outputs.versao }}" -o ..\saida\terra-ajudante.exe ./cmd/terra-ajudante
+
+      - name: Modo Internet Explorer (TerraIE.exe)
+        shell: cmd
+        run: |
+          copy instalador\windows\terra-da-luz.ico iehost\terra-da-luz.ico >nul
+          call iehost\compilar.cmd || exit /b 1
+          copy iehost\TerraIE.exe saida\TerraIE.exe
+
+      - name: Configuração do instalador
+        shell: pwsh
+        run: python instalador/preparar.py --plataforma windows --versao ${{ steps.versao.outputs.versao }}
+
+      - name: Instalador (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DArquivoNavegador=$PWD\saida\mini_installer.exe" "/DPastaBinarios=$PWD\saida" instalador\windows\terra-da-luz.iss
+          if ($LASTEXITCODE -ne 0) { throw 'ISCC falhou' }
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: instalador-windows
+          path: saida/TerraDaLuz-Setup-*.exe
+          retention-days: 30
+
+  publicar:
+    needs: empacotar
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publicar }}
+    uses: ./.github/workflows/publicar.yml
+    with:
+      versao: ${{ needs.empacotar.outputs.versao }}
+      plataforma: windows-x64
+      artefato: instalador-windows
+    secrets: inherit

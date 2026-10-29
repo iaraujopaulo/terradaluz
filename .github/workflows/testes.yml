@@ -1,0 +1,50 @@
+name: Testes
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Ajudante e ferramentas (Go)
+        run: |
+          cd ajudante
+          go vet ./...
+          go test ./...
+          GOOS=windows go vet ./...
+      - name: Antigolpe (Node)
+        run: |
+          node extensoes/nucleo/testes/analise.test.mjs
+          node extensoes/nucleo/testes/background.test.mjs
+      - name: Arquivos JSON
+        run: |
+          for f in extensoes/*/manifest.json extensoes/nucleo/regras/*.json politicas/*.json politicas/initial_preferences terra.config.json; do
+            python3 -m json.tool "$f" > /dev/null || { echo "JSON inválido: $f"; exit 1; }
+          done
+      - name: Integração com o ungoogled-chromium das 3 plataformas
+        run: |
+          for p in windows:ungoogledChromiumWindows linux:ungoogledChromiumLinux macos:ungoogledChromiumMacos; do
+            PLAT=${p%%:*}; CHAVE=${p##*:}
+            REPO=$(python3 -c "import json;print(json.load(open('terra.config.json'))['$CHAVE']['repositorio'])")
+            TAG=$(python3 -c "import json;print(json.load(open('terra.config.json'))['$CHAVE']['tag'])")
+            git clone -q --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules "$REPO" "up-$PLAT"
+            python3 chromium/integrar.py "up-$PLAT" --plataforma "$PLAT"
+          done
+          python3 -c "import ast;ast.parse(open('up-windows/build.py').read())"
+          bash -n up-linux/scripts/shared.sh
+          bash -n up-macos/build.sh
+      - name: Configuração dos instaladores
+        run: |
+          for p in windows linux macos; do python3 instalador/preparar.py --plataforma $p --versao 0.0.0-teste; done
+          bash -n instalador/macos/construir-pkg.sh
+          bash -n instalador/macos/scripts/postinstall
+          bash -n instalador/linux/terra-da-luz.sh

@@ -1,0 +1,1366 @@
+# Etapas de compilação do Terra da Luz para macOS, para uma arquitetura.
+# Chamado por navegador-macos.yml (Apple Silicon e Intel).
+name: Etapas macOS
+
+on:
+  workflow_call:
+    inputs:
+      arch:
+        required: true
+        type: string
+      maquina:
+        required: false
+        type: string
+        default: macos-15
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  recursos:
+    runs-on: ${{ inputs.maquina }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Baixar código-fonte e aplicar patches
+        run: ./github_fetch_resources.sh ${{ inputs.arch }} | tee -a github_actions_retrieve_resources.log
+      - name: Compactar recursos
+        run: ./github_pack_resources.sh | tee -a github_actions_retrieve_resources.log
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ungoogled_chromium_macos_resources_${{ inputs.arch }}
+          path: upload_build_resources/
+
+  etapa-01:
+    runs-on: ${{ inputs.maquina }}
+    needs: recursos
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - uses: actions/download-artifact@v5
+        with:
+          name: ungoogled_chromium_macos_resources_${{ inputs.arch }}
+      - name: Descompactar recursos
+        run: ./github_unpack_resources.sh
+      - name: Configurar compilação
+        run: ./github_before_build.sh ${{ inputs.arch }} | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Compilar (etapa 1 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-02:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-01
+    if: ${{ needs.etapa-01.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 2 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-03:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-02
+    if: ${{ needs.etapa-02.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 3 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-04:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-03
+    if: ${{ needs.etapa-03.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 4 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-05:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-04
+    if: ${{ needs.etapa-04.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 5 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-06:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-05
+    if: ${{ needs.etapa-05.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 6 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-07:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-06
+    if: ${{ needs.etapa-06.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 7 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-08:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-07
+    if: ${{ needs.etapa-07.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 8 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-09:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-08
+    if: ${{ needs.etapa-08.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 9 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-10:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-09
+    if: ${{ needs.etapa-09.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 10 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-11:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-10
+    if: ${{ needs.etapa-10.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 11 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-12:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-11
+    if: ${{ needs.etapa-11.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 12 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-13:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-12
+    if: ${{ needs.etapa-12.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 13 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-14:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-13
+    if: ${{ needs.etapa-13.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 14 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-15:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-14
+    if: ${{ needs.etapa-14.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 15 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-16:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-15
+    if: ${{ needs.etapa-15.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 16 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-17:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-16
+    if: ${{ needs.etapa-16.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 17 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-18:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-17
+    if: ${{ needs.etapa-17.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 18 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-19:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-18
+    if: ${{ needs.etapa-18.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 19 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5
+
+  etapa-20:
+    runs-on: ${{ inputs.maquina }}
+    needs: etapa-19
+    if: ${{ needs.etapa-19.outputs.status == 'running' }}
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { path: terra-da-luz }
+      - uses: ./terra-da-luz/.github/actions/preparar-upstream
+        with: { plataforma: macos }
+      - name: Início
+        run: date +%s > ./epoch_job_start.txt
+      - name: Limpar espaço
+        run: sudo rm -rf $ANDROID_HOME
+      - name: Scripts de compilação
+        run: cp -va ./.github/scripts/ ./
+      - name: Xcode
+        run: ./github_prepare_xcode.sh
+      - name: Desligar Spotlight
+        run: sudo mdutil -a -i off
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+      - name: Ambiente e ferramentas
+        run: ./github_setup_env_toolchain.sh ${{ inputs.arch }} | tee -a github_actions_setup_env_toolchain.log
+      - name: Descompactar etapa anterior
+        run: ./github_unpack_archive.sh
+      - name: Compilar (etapa 20 de até 20)
+        id: build
+        run: ./github_build.sh ${{ inputs.arch }} 2>&1 | tee -a github_actions_build_${{ inputs.arch }}.log
+      - name: Empacotar etapa ou aplicativo pronto
+        run: |
+          if [ -f "build_finished_${{ inputs.arch }}.log" ]; then
+            APP=$(find build/src/out/Default -maxdepth 1 -name '*.app' ! -name '*Helper*' | head -1)
+            echo "Aplicativo pronto: $APP"
+            mkdir -p app_final
+            ditto -c -k --keepParent "$APP" "app_final/terra-app-${{ inputs.arch }}.zip"
+          else
+            ./github_prepare_artifacts.sh ${{ inputs.arch }} | tee -a github_actions_upload_${{ inputs.arch }}.log
+          fi
+      - name: Enviar etapa
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_artifact_${{ inputs.arch }}
+          path: upload_part_build/
+          overwrite: true
+      - name: Enviar registros
+        if: ${{ steps.build.outputs.status == 'running' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: github_build_logs_${{ inputs.arch }}
+          path: upload_logs/
+          overwrite: true
+      - name: Enviar aplicativo pronto
+        if: ${{ steps.build.outputs.status == 'finished' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: terra-app-${{ inputs.arch }}
+          path: app_final/
+          retention-days: 5

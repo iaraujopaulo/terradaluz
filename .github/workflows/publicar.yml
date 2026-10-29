@@ -1,0 +1,119 @@
+# Publica uma versão compilada de uma plataforma: cria o "Release" no GitHub
+# com o instalador e atualiza o manifesto assinado que os navegadores
+# instalados consultam para se atualizar sozinhos.
+name: Publicar versão
+
+on:
+  workflow_call:
+    inputs:
+      versao:
+        type: string
+        required: true
+      plataforma:
+        description: windows-x64, linux-x64 ou macos-universal
+        type: string
+        required: true
+      artefato:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.artefato }}
+          path: saida
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+
+      - name: Ferramentas e chave de assinatura
+        env:
+          CHAVES_TERRA: ${{ secrets.CHAVES_TERRA }}
+          CHAVE_ATUALIZACAO: ${{ secrets.CHAVE_ATUALIZACAO }}
+        run: |
+          go -C ajudante build -o "$PWD/terra-ferramentas" ./cmd/terra-ferramentas
+          ferramentas/carregar-chaves.sh atualizacao.key
+
+      - name: Localizar o instalador
+        run: |
+          case "${{ inputs.plataforma }}" in
+            windows-x64)     PADRAO='TerraDaLuz-Setup-*.exe'; SISTEMA=Windows ;;
+            linux-x64)       PADRAO='TerraDaLuz-*.flatpak';    SISTEMA=Linux ;;
+            macos-universal) PADRAO='TerraDaLuz-*.pkg';        SISTEMA=macOS ;;
+            *) echo "plataforma desconhecida"; exit 1 ;;
+          esac
+          INSTALADOR=$(find saida -name "$PADRAO" | head -1)
+          [ -n "$INSTALADOR" ] || { echo "instalador não encontrado"; exit 1; }
+          echo "INSTALADOR=$INSTALADOR" >> "$GITHUB_ENV"
+          echo "SISTEMA=$SISTEMA" >> "$GITHUB_ENV"
+          echo "TAG=v${{ inputs.versao }}-$(echo ${{ inputs.plataforma }} | cut -d- -f1)" >> "$GITHUB_ENV"
+
+      - name: Criar o Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOME=$(basename "$INSTALADOR")
+          (cd "$(dirname "$INSTALADOR")" && sha256sum "$NOME" > SHA256SUMS.txt)
+          gh release create "$TAG" "$INSTALADOR" "$(dirname "$INSTALADOR")/SHA256SUMS.txt" \
+            --title "Terra da Luz ${{ inputs.versao }} para $SISTEMA" \
+            --notes "Baixe **$NOME** e abra o arquivo para instalar. Quem já tem o Terra da Luz recebe esta versão automaticamente." \
+            --target "$GITHUB_SHA"
+
+      - name: Manifesto de atualização assinado
+        run: |
+          set -euo pipefail
+          CANAL=$(python3 -c "import json;print(json.load(open('terra.config.json')).get('canal','estavel'))")
+          mkdir -p publicar/atualizacoes
+          ./terra-ferramentas assinar-manifesto \
+            --chave chaves/atualizacao.key \
+            --versao "${{ inputs.versao }}" \
+            --notas "Terra da Luz ${{ inputs.versao }}" \
+            --url-base "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/" \
+            --saida "publicar/atualizacoes/$CANAL-${{ inputs.plataforma }}.json" \
+            "${{ inputs.plataforma }}=$INSTALADOR"
+          cat "publicar/atualizacoes/$CANAL-${{ inputs.plataforma }}.json"
+          rm -rf chaves
+
+      - name: Repositório Flatpak (atualizações no Linux)
+        if: ${{ inputs.plataforma == 'linux-x64' }}
+        run: |
+          set -euo pipefail
+          mkdir -p publicar/flatpak
+          tar -C publicar/flatpak -xf "$(find saida -name flatpak-repo.tar | head -1)"
+          URL=$(python3 ferramentas/terra_config.py urlPublica)
+          CHAVE=$(base64 -w0 politicas/flatpak-chave-publica.gpg)
+          cat > publicar/flatpak/terra-da-luz.flatpakrepo <<EOF
+          [Flatpak Repo]
+          Title=Terra da Luz
+          Url=${URL}flatpak/repo/
+          Homepage=${URL}
+          Icon=${URL}simbolo.png
+          GPGKey=$CHAVE
+          EOF
+          cat > publicar/flatpak/terra-da-luz.flatpakref <<EOF
+          [Flatpak Ref]
+          Title=Terra da Luz
+          Name=br.terradaluz.TerraDaLuz
+          Branch=stable
+          Url=${URL}flatpak/repo/
+          IsRuntime=false
+          RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo
+          GPGKey=$CHAVE
+          EOF
+          sed -i 's/^          //' publicar/flatpak/terra-da-luz.flatpakrepo publicar/flatpak/terra-da-luz.flatpakref
+
+      - name: Publicar no GitHub Pages
+        run: ferramentas/atualizar-site.sh publicar "Terra da Luz ${{ inputs.versao }} (${{ inputs.plataforma }})"

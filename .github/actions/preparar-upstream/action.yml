@@ -1,0 +1,40 @@
+name: Preparar ungoogled-chromium (Linux ou macOS) com o Terra da Luz
+description: >
+  Baixa o repositório do ungoogled-chromium da plataforma na versão indicada em
+  terra.config.json para a raiz do espaço de trabalho e aplica o Terra da Luz.
+  O repositório do Terra da Luz precisa estar em ./terra-da-luz.
+inputs:
+  plataforma:
+    description: linux ou macos
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Baixar ungoogled-chromium (${{ inputs.plataforma }})
+      shell: bash
+      run: |
+        set -euo pipefail
+        CHAVE=$([ "${{ inputs.plataforma }}" = linux ] && echo ungoogledChromiumLinux || echo ungoogledChromiumMacos)
+        REPO=$(python3 -c "import json;print(json.load(open('terra-da-luz/terra.config.json'))['$CHAVE']['repositorio'])")
+        TAG=$(python3 -c "import json;print(json.load(open('terra-da-luz/terra.config.json'))['$CHAVE']['tag'])")
+        echo "Usando $REPO @ $TAG"
+        rm -rf .upstream
+        git clone --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules "$REPO" .upstream
+        cp -a .upstream/. .
+        rm -rf .upstream
+
+    - name: Aplicar o Terra da Luz
+      shell: bash
+      run: python3 terra-da-luz/chromium/integrar.py . --plataforma ${{ inputs.plataforma }}
+
+    - name: Ícone do macOS (Assets.car)
+      if: ${{ inputs.plataforma == 'macos' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        SAIDA=$(mktemp -d)
+        xcrun actool terra-da-luz/marca/macos/Assets.xcassets --compile "$SAIDA" \
+          --platform macosx --minimum-deployment-target 12.0 --app-icon AppIcon \
+          --output-partial-info-plist "$SAIDA/parcial.plist" >/dev/null
+        cp "$SAIDA/Assets.car" terra-marca/overlay/chrome/app/theme/chromium/mac/Assets.car
+        echo "Assets.car do Terra da Luz pronto"

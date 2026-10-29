@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova aba</title>
+  <link rel="icon" href="../icones/icone-32.png">
+  <link rel="stylesheet" href="../estilo/base.css">
+  <link rel="stylesheet" href="novaaba.css">
+</head>
+<body>
+  <div class="ceu" aria-hidden="true"><div class="brilho"></div></div>
+
+  <header class="topo">
+    <div class="marca"><img src="../icones/icone-48.png" alt=""> Terra da Luz</div>
+    <span id="chipConteiner" class="chip-conteiner oculto"><span class="ponto"></span><span></span></span>
+    <nav class="acoes-topo">
+      <a class="botao fantasma" href="painel.html#extensoes">Extensões</a>
+      <a class="botao fantasma" href="painel.html">Painel</a>
+    </nav>
+  </header>
+
+  <main class="centro">
+    <p id="saudacao" class="saudacao"></p>
+    <h1 id="relogio" class="relogio">--:--</h1>
+
+    <form id="busca" class="busca cartao" role="search">
+      <button type="button" id="trocarBuscador" class="buscador" aria-haspopup="listbox" title="Escolher buscador">
+        <span id="nomeBuscador">DuckDuckGo</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <input id="termo" name="q" type="search" autocomplete="off" placeholder="Pesquise com privacidade ou digite um endereço" aria-label="Pesquisar" autofocus>
+      <button class="lupa" type="submit" aria-label="Pesquisar">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <ul id="listaBuscadores" class="lista-buscadores cartao oculto" role="listbox"></ul>
+    </form>
+
+    <section id="atalhos" class="atalhos" aria-label="Atalhos"></section>
+  </main>
+
+  <section class="painel-protecao cartao" aria-label="Proteção de hoje">
+    <div class="pp-titulo">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z" fill="currentColor" opacity=".18"/><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.4 2.4 4.6-4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><strong>Proteção de hoje</strong><span id="nivelTexto" class="mudo"></span></div>
+    </div>
+    <dl class="numeros">
+      <div><dt>Rastreadores</dt><dd id="nRastreadores">0</dd></div>
+      <div><dt>Redes sociais</dt><dd id="nSocial">0</dd></div>
+      <div><dt>Impressão digital</dt><dd id="nImpressao">0</dd></div>
+      <div><dt>Golpes evitados</dt><dd id="nGolpes">0</dd></div>
+    </dl>
+  </section>
+
+  <dialog id="dialogoAtalho" class="cartao">
+    <form method="dialog" id="formAtalho">
+      <h2>Novo atalho</h2>
+      <label>Nome<input class="campo" name="nome" required maxlength="40"></label>
+      <label>Endereço<input class="campo" name="url" required placeholder="https://"></label>
+      <div class="linha-botoes">
+        <button class="botao" value="cancelar" formnovalidate>Cancelar</button>
+        <button class="botao primario" value="salvar">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="novaaba.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# Opções de compilação do Terra da Luz, somadas às do ungoogled-chromium.
+# A limpeza de telemetria vem do ungoogled-chromium (flags.gn): sem chaves de
+# API do Google, sem Safe Browsing do Google, sem relatórios, sem mDNS, sem
+# descoberta de dispositivos e sem acesso remoto.
+enable_pdf=true
+enable_print_preview=true

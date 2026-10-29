@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>br.terradaluz.TerraDaLuz</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>BSD-3-Clause</project_license>
+  <name>Terra da Luz</name>
+  <summary>Navegador privado baseado no ungoogled-chromium</summary>
+  <developer id="br.terradaluz">
+    <name>Projeto Terra da Luz</name>
+  </developer>
+  <description>
+    <p>O Terra da Luz usa o motor do Chromium sem a telemetria do Google e traz recursos de privacidade inspirados no Firefox.</p>
+    <ul>
+      <li>Bloqueio de rastreadores e uBlock Origin embutido</li>
+      <li>Aviso de sites falsos e golpes</li>
+      <li>Contêineres para separar banco, trabalho e compras</li>
+      <li>Extensões da Chrome Web Store</li>
+      <li>DuckDuckGo como buscador padrão</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">br.terradaluz.TerraDaLuz.desktop</launchable>
+  <categories>
+    <category>Network</category>
+    <category>WebBrowser</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@VERSAO@" date="@DATA@"/>
+  </releases>
+</component>

@@ -1,0 +1,75 @@
+--- a/chrome/install_static/chromium_install_modes.h
++++ b/chrome/install_static/chromium_install_modes.h
+@@ -21,7 +21,7 @@
+ 
+ // The brand-specific product name to be included as a component of the install
+ // and user data directory paths.
+-inline constexpr wchar_t kProductPathName[] = L"Chromium";
++inline constexpr wchar_t kProductPathName[] = L"TerraDaLuz";
+ 
+ // The brand-specific safe browsing client name.
+ inline constexpr char kSafeBrowsingName[] = "chromium";
+@@ -54,28 +54,28 @@
+         .logo_suffix = L"",  // No logo suffix for the primary install mode.
+         .app_guid =
+             L"",  // Empty app_guid since no integration with Google Update.
+-        .base_app_name = L"Chromium",              // A distinct base_app_name.
+-        .base_app_id = L"Chromium",                // A distinct base_app_id.
+-        .browser_prog_id_prefix = L"ChromiumHTM",  // Browser ProgID prefix.
++        .base_app_name = L"Terra da Luz",              // A distinct base_app_name.
++        .base_app_id = L"TerraDaLuz",                // A distinct base_app_id.
++        .browser_prog_id_prefix = L"TerraLuzHTM",  // Browser ProgID prefix.
+         .browser_prog_id_description =
+-            L"Chromium HTML Document",  // Browser ProgID description.
+-        .direct_launch_url_scheme = "chromium",
+-        .pdf_prog_id_prefix = L"ChromiumPDF",  // PDF ProgID prefix.
++            L"Documento HTML do Terra da Luz",  // Browser ProgID description.
++        .direct_launch_url_scheme = "terradaluz",
++        .pdf_prog_id_prefix = L"TerraLuzPDF",  // PDF ProgID prefix.
+         .pdf_prog_id_description =
+-            L"Chromium PDF Document",  // PDF ProgID description.
++            L"Documento PDF do Terra da Luz",  // PDF ProgID description.
+         .active_setup_guid =
+-            L"{7D2B3E1D-D096-4594-9D8F-A6667F12E0AC}",  // Active Setup
++            L"{5B8E2C71-3A94-4F6D-9C21-7E0D4A6B19F3}",  // Active Setup
+                                                         // GUID.
+-        .toast_activator_clsid = {0x635EFA6F,
+-                                  0x08D6,
+-                                  0x4EC9,
+-                                  {0xBD, 0x14, 0x8A, 0x0F, 0xDE, 0x97, 0x51,
+-                                   0x59}},  // Toast Activator CLSID.
+-        .elevator_clsid = {0xD133B120,
+-                           0x6DB4,
+-                           0x4D6B,
+-                           {0x8B, 0xFE, 0x83, 0xBF, 0x8C, 0xA1, 0xB1,
+-                            0xB0}},  // Elevator CLSID.
++        .toast_activator_clsid = {0x2F4C8D19,
++                                  0x6B3E,
++                                  0x4A71,
++                                  {0x9E, 0x52, 0x1C, 0x7B, 0xD0, 0x3A, 0x88,
++                                   0x46}},  // Toast Activator CLSID.
++        .elevator_clsid = {0x7A1E5B32,
++                           0xC48D,
++                           0x4F09,
++                           {0xA6, 0x3B, 0x52, 0xE9, 0x1D, 0x47, 0xC0,
++                            0x8E}},  // Elevator CLSID.
+         .elevator_iid = {0xbb19a0e5,
+                          0xc6,
+                          0x4966,
+@@ -83,11 +83,11 @@
+                           0x3a}},  // IElevator IID and TypeLib
+         // {BB19A0E5-00C6-4966-94B2-5AFEC6FED93A}.
+         .old_elevator_iids = {},
+-        .tracing_service_clsid = {0x83f69367,
+-                                  0x442d,
+-                                  0x447f,
+-                                  {0x8b, 0xcc, 0x0e, 0x3f, 0x97, 0xbe, 0x9c,
+-                                   0xf2}},  // SystemTraceSession CLSID.
++        .tracing_service_clsid = {0x4D9B6E20,
++                                  0x1F7A,
++                                  0x4C35,
++                                  {0xB8, 0x0D, 0x63, 0xA4, 0x2E, 0x91, 0x5F,
++                                   0xC7}},  // SystemTraceSession CLSID.
+         .tracing_service_iid = {0xe0b03e2d,
+                                 0x7682,
+                                 0x4d83,

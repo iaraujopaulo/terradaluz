@@ -1,0 +1,60 @@
+# Receita do Flatpak do Terra da Luz.
+#
+# A pasta "build/" é montada pelo GitHub Actions com:
+#   navegador.tar.xz           navegador compilado (ungoogled-chromium-portablelinux + Terra da Luz)
+#   terra-ajudante             ajudante (Go)
+#   terra-ajudante.json, versao.txt, initial_preferences, politicas.json, terra-da-luz.sh
+#   br.terradaluz.TerraDaLuz.desktop, br.terradaluz.TerraDaLuz.metainfo.xml, icones/
+#
+# O pacote final (.flatpak) instala em qualquer distribuição com Flatpak e se
+# atualiza sozinho pelo repositório publicado no GitHub Pages.
+app-id: br.terradaluz.TerraDaLuz
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+base: org.chromium.Chromium.BaseApp
+base-version: '25.08'
+command: terra-da-luz
+separate-locales: false
+finish-args:
+  - --require-version=1.8.2
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --socket=cups
+  - --socket=pcsc
+  - --device=all
+  - --filesystem=xdg-download
+  - --filesystem=xdg-run/pipewire-0
+  - --persist=.pki
+  - --talk-name=org.freedesktop.FileManager1
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.ScreenSaver
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.kde.kwalletd5
+  - --talk-name=org.kde.kwalletd6
+  - --talk-name=org.gnome.SessionManager
+  - --system-talk-name=org.freedesktop.UPower
+  - --own-name=org.mpris.MediaPlayer2.chromium.*
+modules:
+  - name: terra-da-luz
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/terra-da-luz
+      - tar -xJf navegador.tar.xz --strip-components=1 -C /app/terra-da-luz
+      - rm -f /app/terra-da-luz/chrome-wrapper /app/terra-da-luz/chrome_sandbox
+      - install -Dm644 initial_preferences /app/terra-da-luz/initial_preferences
+      - install -Dm644 politicas.json /app/etc/terra-da-luz/policies/managed/terra-da-luz.json
+      - install -Dm755 terra-da-luz.sh /app/bin/terra-da-luz
+      - install -Dm755 terra-ajudante /app/bin/terra-ajudante
+      - install -Dm644 terra-ajudante.json /app/bin/terra-ajudante.json
+      - install -Dm644 versao.txt /app/bin/versao.txt
+      - install -Dm644 br.terradaluz.TerraDaLuz.desktop /app/share/applications/br.terradaluz.TerraDaLuz.desktop
+      - install -Dm644 br.terradaluz.TerraDaLuz.metainfo.xml /app/share/metainfo/br.terradaluz.TerraDaLuz.metainfo.xml
+      - for t in 16 24 32 48 64 128 256 512; do install -Dm644 icones/$t.png /app/share/icons/hicolor/${t}x${t}/apps/br.terradaluz.TerraDaLuz.png; done
+      - install -Dm644 icones/terra-da-luz.svg /app/share/icons/hicolor/scalable/apps/br.terradaluz.TerraDaLuz.svg
+    sources:
+      - type: dir
+        path: build

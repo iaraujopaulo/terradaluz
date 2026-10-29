@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do Terra da Luz</title>
+  <link rel="icon" href="../icones/icone-32.png">
+  <link rel="stylesheet" href="../estilo/base.css">
+  <link rel="stylesheet" href="painel.css">
+</head>
+<body>
+  <aside class="lateral">
+    <div class="marca"><img src="../icones/icone-48.png" alt=""> Terra da Luz</div>
+    <nav id="menu" aria-label="Seções">
+      <a href="#protecao">Proteção</a>
+      <a href="#antigolpe">Antigolpe</a>
+      <a href="#conteineres">Contêineres</a>
+      <a href="#modoie">Modo Internet Explorer</a>
+      <a href="#extensoes">Extensões</a>
+      <a href="#atualizacoes">Atualizações</a>
+      <a href="#novaaba">Nova aba</a>
+      <a href="#sobre">Sobre</a>
+    </nav>
+  </aside>
+
+  <main>
+    <!-- PROTEÇÃO -->
+    <section id="sec-protecao" class="secao">
+      <h1>Proteção contra rastreamento</h1>
+      <p class="mudo">Inspirada na Proteção Aprimorada do Firefox, funcionando no motor nativo do Chromium.</p>
+      <div class="niveis" role="radiogroup" aria-label="Nível de proteção">
+        <label class="nivel cartao"><input type="radio" name="nivel" value="padrao">
+          <strong>Padrão</strong><span>Bloqueia rastreadores de terceiros, de redes sociais, de impressão digital e mineradores de criptomoeda. Remove códigos de rastreio dos links. Quase nunca quebra sites.</span></label>
+        <label class="nivel cartao"><input type="radio" name="nivel" value="estrita">
+          <strong>Estrita</strong><span>Tudo do Padrão e mais disfarce de áudio, processador, bateria e lista de fontes. Mais privacidade; alguns sites podem se comportar diferente.</span></label>
+        <label class="nivel cartao"><input type="radio" name="nivel" value="desligada">
+          <strong>Desligada</strong><span>Não bloqueia rastreadores. O antigolpe continua funcionando.</span></label>
+      </div>
+
+      <h2>Proteções sempre ativas</h2>
+      <ul class="lista-status">
+        <li><span class="etiqueta ok">Ativo</span> Sem telemetria do Google: o navegador é baseado no ungoogled-chromium.</li>
+        <li><span class="etiqueta ok">Ativo</span> Cookies de terceiros bloqueados e armazenamento separado por site (como a Proteção Total de Cookies do Firefox).</li>
+        <li><span class="etiqueta ok">Ativo</span> Ruído contra impressão digital em canvas e medidas de texto, direto no código C++.</li>
+        <li><span class="etiqueta ok">Ativo</span> Isolamento de processos por site (sandbox do Chromium).</li>
+        <li><span class="etiqueta ok">Ativo</span> Preferência por HTTPS e DNS seguro (Quad9), que também bloqueia domínios de malware.</li>
+        <li><span class="etiqueta ok">Ativo</span> uBlock Origin embutido com listas de anúncios e rastreadores.</li>
+      </ul>
+
+      <h2>Sites sem proteção</h2>
+      <p class="mudo">Sites em que você desligou o bloqueio pelo ícone do Terra da Luz.</p>
+      <ul id="sitesSemProtecao" class="lista-simples"></ul>
+    </section>
+
+    <!-- ANTIGOLPE -->
+    <section id="sec-antigolpe" class="secao">
+      <h1>Antigolpe</h1>
+      <p class="mudo">Verifica cada endereço antes de abrir. A análise acontece no seu computador: nenhum site que você visita é enviado para ninguém.</p>
+      <div class="cartao opcoes">
+        <label class="opcao"><span><strong>Avisar sobre sites falsos e golpes</strong><small>Detecta imitações de bancos, gov.br, lojas e redes sociais, endereços disfarçados e letras de outros alfabetos.</small></span>
+          <span class="chave"><input type="checkbox" data-config="antiGolpe"><span></span></span></label>
+        <label class="opcao"><span><strong>Usar listas públicas de golpes e vírus</strong><small>Baixa uma vez a cada 12 horas as listas completas do URLhaus (abuse.ch) e do OpenPhish e compara aqui mesmo.</small></span>
+          <span class="chave"><input type="checkbox" data-config="listasAntiGolpe"><span></span></span></label>
+        <label class="opcao"><span><strong>Bloquear downloads perigosos</strong><small>Cancela arquivos vindos de sites de golpe e pausa programas baixados sem conexão segura.</small></span>
+          <span class="chave"><input type="checkbox" data-config="bloquearDownloadsPerigosos"><span></span></span></label>
+      </div>
+      <div class="linha-acao">
+        <span id="infoListas" class="mudo"></span>
+        <button id="atualizarListas" class="botao">Atualizar listas agora</button>
+      </div>
+    </section>
+
+    <!-- CONTÊINERES -->
+    <section id="sec-conteineres" class="secao">
+      <h1>Contêineres</h1>
+      <p class="mudo">Cada contêiner é um espaço totalmente separado, com seus próprios cookies, logins e histórico. Use um para o banco, outro para o trabalho, outro para compras.</p>
+      <div id="listaConteineres" class="grade-conteineres"></div>
+      <form id="novoConteiner" class="cartao form-linha">
+        <input class="campo" name="nome" placeholder="Nome do novo contêiner" maxlength="40" required>
+        <div class="cores" role="radiogroup" aria-label="Cor"></div>
+        <button class="botao primario">Criar</button>
+      </form>
+      <h2>Sites que sempre abrem em um contêiner</h2>
+      <ul id="regrasConteiner" class="lista-simples"></ul>
+    </section>
+
+    <!-- MODO IE -->
+    <section id="sec-modoie" class="secao">
+      <h1>Modo Internet Explorer</h1>
+      <p class="mudo">Para sistemas antigos de prefeituras, bancos, empresas e órgãos públicos que só funcionam no Internet Explorer. O site abre em uma janela do Terra da Luz que usa o motor do IE 11 (MSHTML) do próprio Windows.</p>
+      <div id="statusAjudante" class="cartao status-ajudante"></div>
+      <h2>Sites que sempre abrem no modo IE</h2>
+      <form id="novoSiteIE" class="form-linha">
+        <input class="campo" name="site" placeholder="exemplo: sistema.prefeitura.gov.br" required>
+        <button class="botao">Adicionar</button>
+      </form>
+      <ul id="sitesIE" class="lista-simples"></ul>
+      <p class="mudo pequeno">Dica: em qualquer página, clique com o botão direito e escolha “Recarregar no modo Internet Explorer”.</p>
+    </section>
+
+    <!-- EXTENSÕES -->
+    <section id="sec-extensoes" class="secao">
+      <h1>Central de extensões</h1>
+      <p class="mudo">Instale extensões da Chrome Web Store. O Terra da Luz pede a sua confirmação antes de cada instalação, como no Chrome.</p>
+      <form id="instalarLoja" class="cartao form-linha">
+        <input class="campo" name="texto" placeholder="Cole aqui o endereço da extensão na Chrome Web Store" required>
+        <button class="botao primario">Instalar</button>
+      </form>
+      <div class="linha-acao">
+        <a class="botao" href="https://chromewebstore.google.com/" target="_blank" rel="noreferrer">Abrir a Chrome Web Store</a>
+        <span class="mudo pequeno">Na loja, use o botão “Adicionar ao Terra da Luz”.</span>
+      </div>
+
+      <div class="cartao opcoes">
+        <label class="opcao"><span><strong>Procurar atualizações das extensões da loja</strong><small>Uma vez por dia o Terra da Luz pergunta à Chrome Web Store se há versões novas das extensões que você instalou de lá. Só a lista dessas extensões e suas versões é enviada.</small></span>
+          <span class="chave"><input type="checkbox" data-config="verificarAtualizacoesExtensoes"><span></span></span></label>
+      </div>
+      <div class="linha-acao">
+        <span id="infoAtualizacoesExt" class="mudo"></span>
+        <button id="verificarExtensoes" class="botao">Verificar agora</button>
+      </div>
+      <div id="listaExtensoes" class="lista-extensoes"></div>
+    </section>
+
+    <!-- ATUALIZAÇÕES -->
+    <section id="sec-atualizacoes" class="secao">
+      <h1>Atualizações do navegador</h1>
+      <p class="mudo">O Terra da Luz se atualiza sozinho: verifica novas versões ao ligar o computador e a cada 6 horas, confere a assinatura digital do pacote e instala quando o navegador é fechado.</p>
+      <div class="cartao versao">
+        <div>
+          <span class="mudo">Versão instalada</span>
+          <strong id="versaoAtual">—</strong>
+        </div>
+        <div>
+          <span class="mudo">Situação</span>
+          <strong id="situacaoAtualizacao">—</strong>
+        </div>
+        <div class="acoes-versao">
+          <button id="verificarAtualizacao" class="botao">Verificar agora</button>
+          <button id="instalarAtualizacao" class="botao primario oculto">Instalar e reiniciar</button>
+        </div>
+      </div>
+      <p class="mudo pequeno">As extensões embutidas (Núcleo, uBlock Origin e tema) também são atualizadas automaticamente pelo servidor do projeto.</p>
+    </section>
+
+    <!-- NOVA ABA -->
+    <section id="sec-novaaba" class="secao">
+      <h1>Nova aba</h1>
+      <div class="cartao opcoes">
+        <label class="opcao"><span><strong>Seu nome</strong><small>Usado só na saudação da nova aba.</small></span>
+          <input class="campo curto" data-config="nomePessoa" maxlength="30" placeholder="Opcional"></label>
+        <label class="opcao"><span><strong>Mostrar sites mais visitados</strong><small>Calculado a partir do seu histórico, no seu computador.</small></span>
+          <span class="chave"><input type="checkbox" data-config="mostrarSitesMaisVisitados"><span></span></span></label>
+        <label class="opcao"><span><strong>Buscador da nova aba</strong><small>Para a barra de endereços, use Configurações › Mecanismo de pesquisa.</small></span>
+          <select class="campo curto" data-config="buscador" id="selBuscador"></select></label>
+      </div>
+    </section>
+
+    <!-- SOBRE -->
+    <section id="sec-sobre" class="secao">
+      <h1>Sobre o Terra da Luz</h1>
+      <div class="cartao sobre">
+        <img src="../icones/icone-128.png" alt="" width="96" height="96">
+        <div>
+          <p><strong>Terra da Luz</strong> — um navegador híbrido: o motor Blink e o isolamento de processos do Chromium, sem a telemetria do Google (ungoogled-chromium), com a filosofia de privacidade do Firefox.</p>
+          <p class="mudo">Núcleo <span id="versaoNucleo"></span>. Construído sobre Chromium e ungoogled-chromium (licença BSD) e uBlock Origin (GPLv3). Firefox é marca da Mozilla; o Terra da Luz não é afiliado à Mozilla nem ao Google.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="painel.js"></script>
+</body>
+</html>

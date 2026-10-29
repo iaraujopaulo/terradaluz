@@ -1,0 +1,95 @@
+# Empacota e publica as extensões embutidas (Núcleo, Tema e uBlock Origin).
+# Os navegadores instalados buscam atualizações delas sozinhos no GitHub Pages.
+# Roda quando a pasta extensoes/ muda e toda segunda-feira (para trazer a
+# versão mais nova do uBlock Origin).
+name: Publicar extensões embutidas
+
+on:
+  push:
+    branches: [main]
+    paths: ['extensoes/**', 'politicas/chaves-publicas.json']
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-gh-pages
+  cancel-in-progress: false
+
+jobs:
+  extensoes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Testes do antigolpe
+        run: node extensoes/nucleo/testes/analise.test.mjs
+
+      - name: Ferramentas e chaves
+        env:
+          CHAVES_TERRA: ${{ secrets.CHAVES_TERRA }}
+          CHAVE_NUCLEO: ${{ secrets.CHAVE_NUCLEO }}
+          CHAVE_TEMA: ${{ secrets.CHAVE_TEMA }}
+          CHAVE_UBLOCK: ${{ secrets.CHAVE_UBLOCK }}
+        run: |
+          go -C ajudante build -o "$PWD/terra-ferramentas" ./cmd/terra-ferramentas
+          ferramentas/carregar-chaves.sh nucleo.pem tema.pem ublock.pem
+
+      - name: Baixar o uBlock Origin mais recente
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO=$(python3 -c "import json;print(json.load(open('terra.config.json'))['ublockOrigin']['repositorio'])")
+          gh release download --repo "$REPO" --pattern '*.chromium.zip' --dir ublock-zip
+          mkdir -p ublock && unzip -q ublock-zip/*.chromium.zip -d ublock
+          UBO=$(dirname "$(find ublock -name manifest.json -maxdepth 3 | head -1)")
+          echo "UBO=$UBO" >> "$GITHUB_ENV"
+          python3 -c "import json;print('uBlock Origin', json.load(open('$UBO/manifest.json'))['version'])"
+
+      - name: Empacotar
+        run: |
+          mkdir -p publicar/extensoes trabalho
+          # versão do Núcleo e do Tema: 1.0.<número da execução>
+          for nome in nucleo tema; do
+            rm -rf "trabalho/$nome"; cp -r "extensoes/$nome" "trabalho/$nome"; rm -rf "trabalho/$nome/testes"
+            python3 - "$nome" "${{ github.run_number }}" <<'PY'
+          import json, sys
+          nome, n = sys.argv[1], sys.argv[2]
+          p = f"trabalho/{nome}/manifest.json"
+          m = json.load(open(p, encoding="utf-8"))
+          base = ".".join(m["version"].split(".")[:2])
+          m["version"] = f"{base}.{n}"
+          json.dump(m, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+          print(nome, m["version"])
+          PY
+          done
+          cp -r "$UBO" trabalho/ublock
+
+          XML_ITENS=()
+          for nome in nucleo tema ublock; do
+            SAIDA=$(./terra-ferramentas empacotar-crx --pasta "trabalho/$nome" --chave "chaves/$nome.pem" --saida "publicar/extensoes/$nome.crx")
+            echo "$SAIDA"
+            ID=$(echo "$SAIDA" | cut -d' ' -f1)
+            ESPERADO=$(python3 -c "import json;print(json.load(open('politicas/chaves-publicas.json'))['ids']['$nome'])")
+            if [ "$ID" != "$ESPERADO" ]; then echo "ID de $nome ($ID) diferente do esperado ($ESPERADO): confira os segredos"; exit 1; fi
+            VER=$(python3 -c "import json;print(json.load(open('trabalho/$nome/manifest.json'))['version'])")
+            XML_ITENS+=("$ID:$VER:$nome.crx")
+          done
+          URL=$(python3 ferramentas/terra_config.py urlPublica)
+          ./terra-ferramentas manifesto-extensoes --url-base "${URL}extensoes/" --saida publicar/extensoes/atualizacoes.xml "${XML_ITENS[@]}"
+          cat publicar/extensoes/atualizacoes.xml
+          rm -rf chaves
+
+      - name: Publicar no GitHub Pages
+        run: ferramentas/atualizar-site.sh publicar "Extensões embutidas #${{ github.run_number }}"

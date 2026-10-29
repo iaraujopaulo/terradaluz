@@ -1,0 +1,10 @@
+COMPANY_FULLNAME=Projeto Terra da Luz
+COMPANY_SHORTNAME=Terra da Luz
+PRODUCT_FULLNAME=Terra da Luz
+PRODUCT_SHORTNAME=Terra da Luz
+PRODUCT_INSTALLER_FULLNAME=Instalador do Terra da Luz
+PRODUCT_INSTALLER_SHORTNAME=Instalador do Terra da Luz
+COPYRIGHT=Copyright @LASTCHANGE_YEAR@ Projeto Terra da Luz e The Chromium Authors. Todos os direitos reservados.
+MAC_BUNDLE_ID=br.terradaluz.TerraDaLuz
+MAC_CREATOR_CODE=Cr24
+MAC_TEAM_ID=

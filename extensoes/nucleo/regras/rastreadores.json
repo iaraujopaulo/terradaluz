@@ -1,0 +1,248 @@
+[
+ {
+  "id": 1,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "2mdn.net",
+    "33across.com",
+    "adform.net",
+    "adnxs.com",
+    "adroll.com",
+    "adservice.google.com",
+    "adsrvr.org",
+    "adsymptotic.com",
+    "adtechus.com",
+    "advertising.com",
+    "agkn.com",
+    "amazon-adsystem.com",
+    "amplitude.com",
+    "analytics.google.com",
+    "api.segment.io",
+    "app-measurement.com",
+    "app.adjust.com",
+    "appsflyer.com",
+    "bat.bing.com",
+    "bidswitch.net",
+    "bluekai.com",
+    "bounceexchange.com",
+    "casalemedia.com",
+    "cdn.permutive.com",
+    "cdn.segment.com",
+    "chartbeat.com",
+    "chartbeat.net",
+    "clarity.ms",
+    "contentsquare.net",
+    "contextweb.com",
+    "crazyegg.com",
+    "criteo.com",
+    "criteo.net",
+    "crwdcntrl.net",
+    "demdex.net",
+    "districtm.io",
+    "doubleclick.net",
+    "e-planning.net",
+    "everesttech.net",
+    "exelator.com",
+    "fullstory.com",
+    "google-analytics.com",
+    "googleadservices.com",
+    "googlesyndication.com",
+    "googletagmanager.com",
+    "googletagservices.com",
+    "gumgum.com",
+    "heap.io",
+    "heapanalytics.com",
+    "histats.com",
+    "hotjar.com",
+    "hotjar.io",
+    "hs-analytics.net",
+    "id5-sync.com",
+    "indexww.com",
+    "inspectlet.com",
+    "kochava.com",
+    "krxd.net",
+    "lijit.com",
+    "liveramp.com",
+    "luckyorange.com",
+    "luckyorange.net",
+    "mathtag.com",
+    "mc.yandex.ru",
+    "media.net",
+    "mixpanel.com",
+    "moatads.com",
+    "mouseflow.com",
+    "mxpnl.com",
+    "navegg.com",
+    "nr-data.net",
+    "omtrdc.net",
+    "onetag-sys.com",
+    "openx.net",
+    "outbrain.com",
+    "permutive.app",
+    "pubmatic.com",
+    "quantcast.com",
+    "quantcount.com",
+    "quantserve.com",
+    "rlcdn.com",
+    "rubiconproject.com",
+    "scorecardresearch.com",
+    "seedtag.com",
+    "serving-sys.com",
+    "sharethrough.com",
+    "sizmek.com",
+    "smartadserver.com",
+    "smartlook.com",
+    "sovrn.com",
+    "spotxchange.com",
+    "springserve.com",
+    "statcounter.com",
+    "taboola.com",
+    "tapad.com",
+    "teads.tv",
+    "top-fwz1.mail.ru",
+    "tribalfusion.com",
+    "triplelift.com",
+    "undertone.com",
+    "yieldlab.net",
+    "yieldmo.com",
+    "zemanta.com"
+   ],
+   "domainType": "thirdParty",
+   "resourceTypes": [
+    "script",
+    "xmlhttprequest",
+    "image",
+    "sub_frame",
+    "ping",
+    "media",
+    "websocket",
+    "other",
+    "font",
+    "stylesheet"
+   ]
+  }
+ },
+ {
+  "id": 2,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "ads-twitter.com",
+    "analytics.tiktok.com",
+    "analytics.twitter.com",
+    "connect.facebook.net",
+    "ct.pinterest.com",
+    "pixel.facebook.com",
+    "px.ads.linkedin.com",
+    "sc-static.net",
+    "snap.licdn.com",
+    "static.ads-twitter.com",
+    "tr.snapchat.com"
+   ],
+   "domainType": "thirdParty",
+   "resourceTypes": [
+    "script",
+    "xmlhttprequest",
+    "image",
+    "sub_frame",
+    "ping",
+    "media",
+    "websocket",
+    "other",
+    "font",
+    "stylesheet"
+   ]
+  }
+ },
+ {
+  "id": 3,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "urlFilter": "||facebook.com/tr",
+   "domainType": "thirdParty",
+   "resourceTypes": [
+    "image",
+    "ping",
+    "xmlhttprequest",
+    "script"
+   ]
+  }
+ },
+ {
+  "id": 4,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "fpcdn.io",
+    "fpjs.io",
+    "fpnpmcdn.net",
+    "openfpcdn.io"
+   ],
+   "resourceTypes": [
+    "script",
+    "xmlhttprequest",
+    "image",
+    "sub_frame",
+    "ping",
+    "media",
+    "websocket",
+    "other",
+    "font",
+    "stylesheet"
+   ]
+  }
+ },
+ {
+  "id": 5,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "authedmine.com",
+    "coin-hive.com",
+    "coinhave.com",
+    "coinhive.com",
+    "coinimp.com",
+    "cryptaloot.pro",
+    "crypto-loot.com",
+    "cryptoloot.pro",
+    "jsecoin.com",
+    "mineralt.io",
+    "minero.cc",
+    "minr.pw",
+    "monerominer.rocks",
+    "ppoi.org",
+    "webmine.cz",
+    "webminepool.com"
+   ],
+   "resourceTypes": [
+    "script",
+    "xmlhttprequest",
+    "image",
+    "sub_frame",
+    "ping",
+    "media",
+    "websocket",
+    "other",
+    "font",
+    "stylesheet",
+    "main_frame"
+   ]
+  }
+ }
+]
